@@ -30,9 +30,6 @@ export default {
     ...fn(['a', 'b', 'c'])
   },
   mounted () {
-    // this.$store.dispatch('setTest', 9).then(() => {
-    //   console.log(this.test)
-    // })
     console.log(this.a, this.b, this.c)
   }
 }
