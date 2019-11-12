@@ -17,6 +17,7 @@ import {
   saveFontSize,
   saveTheme
 } from '../../utils/localStorage'
+import {flatten} from '../../utils/book'
 global.epub = Epub
 
 export default {
@@ -41,12 +42,6 @@ export default {
       }
       this.setMenuVisible(!this.menuVisible)
       // this.$store.dispatch('setMenuVisible', !this.menuVisible)
-    },
-    hideTitleAndMenu () {
-      this.setMenuVisible(false)
-      this.setSettingVisible(-1)
-      this.setFontFamilyVisible(false)
-      // this.$store.dispatch('setMenuVisible', false)
     },
     initFontSize () {
       let fontSize = getFontSize(this.fileName)
@@ -122,12 +117,33 @@ export default {
         e.stopPropagation()
       })
     },
+    parseBook () {
+      this.book.loaded.cover.then(cover => {
+        this.book.archive.createUrl(cover).then(url => {
+          this.setCover(url)
+        })
+      })
+      this.book.loaded.metadata.then(metadata => {
+        this.setMetadata(metadata)
+      })
+      this.book.loaded.navigation.then(nav => {
+        const navItem = flatten(nav.toc)
+        function find (item, level = 0) {
+          return !item.parent ? level : find(navItem.filter(parentItem => parentItem.id === item.parent)[0], ++level)
+        }
+        navItem.forEach(item => {
+          item.level = find(item)
+        })
+        this.setNavigation(navItem)
+      })
+    },
     initEpub () {
       const url = `${process.env.VUE_APP_RES_URL}/epub/${this.fileName}.epub`
       this.book = new Epub(url)
       this.setCurrentBook(this.book)
       this.initRendition()
       this.initGesture()
+      this.parseBook()
       this.book.ready.then(() => {
         return this.book.locations.generate(750 * (window.innerWidth / 375) * (getFontSize(this.fileName) / 16)).then(locations => {
           // console.log(locations)
