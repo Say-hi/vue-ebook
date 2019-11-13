@@ -6,15 +6,17 @@
           <span class='icon-search'></span>
         </div>
         <input type='text'
+               v-model='searchText'
                :placeholder='$t("book.searchHint")'
                @click='showSearchPage'
+               @keyup.enter.exact='search()'
                class='slide-contents-search-input'>
       </div>
       <div class='slide-contents-search-cancel'
            v-if='searchVisible'
            @click='hideSearchPage'>{{ $t('book.cancel') }}</div>
     </div>
-    <div class='slide-contents-book-wrapper'>
+    <div class='slide-contents-book-wrapper' v-show='!searchVisible'>
       <div class='slide-contents-book-img-wrapper'>
         <img :src='cover' alt='' class='slide-contents-book-img'>
       </div>
@@ -34,11 +36,23 @@
       :top='156'
       :bottom='48'
       ref='scroll'
+      v-show='!searchVisible'
       class='slide-contents-list'>
       <div class='slide-contents-item' v-for='(item, index) in navigation' :key='index'>
-        <span class='slide-contents-item-label' :class="{'selected': section === index}" :style='contentItemStyle(item)' @click='displayNavigation(item.href)'>{{ item.label }}</span>
+        <span class='slide-contents-item-label' :class="{'selected': section === index}" :style='contentItemStyle(item)' @click='displayContent(item.href)'>{{ item.label }}</span>
         <span class='slide=contents-item-page'></span>
       </div>
+    </scroll>
+    <scroll :top='60'
+            :bottom='48'
+            class='slide-search-list'
+            v-show='searchVisible'>
+      <div v-show='searchList && searchList.length === 0' style='font-size: 16px;'>没有检索到对应的内容，请重新搜索</div>
+      <div class='slide-search-item'
+           v-for='(item, index) in searchList'
+           :key='index'
+           @click='displayContent(item.cfi, true)'
+           v-html='item.excerpt'></div>
     </scroll>
   </div>
 </template>
@@ -55,14 +69,32 @@
     },
     data () {
       return {
-        searchVisible: false
+        searchVisible: false,
+        searchList: null,
+        searchText: ''
       }
     },
     methods: {
-      displayNavigation (target) {
-        this.display(target, () => {
-          this.hideTitleAndMenu()
-        })
+      displayContent (target, highlight = false) {
+        this.display(target, this.hideTitleAndMenu)
+        if (highlight) {
+          this.currentBook.rendition.annotations.highlight(target)
+          // this.currentBook.rendition.annotations.underline(target)
+        }
+      },
+      search () {
+        if (this.searchText && this.searchText.length > 0) {
+          this.doSearch(this.searchText).then(list => {
+            this.searchList = list
+            this.searchList.map(item => {
+              item.excerpt = item.excerpt.replace(this.searchText, `<span class='content-search-text'>${this.searchText}</span>`)
+              return item
+            })
+          })
+        }
+      },
+      doSearch (q) {
+        return Promise.all(this.currentBook.spine.spineItems.map(item => item.load(this.currentBook.load.bind(this.currentBook)).then(item.find.bind(item, q)).finally(item.unload.bind(item)))).then(results => Promise.resolve([].concat.apply([], results)))
       },
       contentItemStyle (item) {
         return {
@@ -74,8 +106,11 @@
       },
       hideSearchPage () {
         this.searchVisible = false
+        this.searchText = ''
+        this.searchList = null
       }
-    }
+    },
+    mounted() {}
   }
 </script>
 
@@ -176,6 +211,17 @@
         }
         .slide-contents-item-page {
         }
+      }
+    }
+    .slide-search-list {
+      padding: 0 px2rem(15);
+      box-sizing: border-box;
+      width: 100%;
+      .slide-search-item {
+        font-size: px2rem(14);
+        line-height: px2rem(16);
+        padding: px2rem(20) 0;
+        box-sizing: border-box;
       }
     }
   }
