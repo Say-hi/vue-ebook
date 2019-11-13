@@ -163,7 +163,7 @@
     top: px2rem(-35);
     left: 0;
     width: 100%;
-    z-index: 200;
+    z-index: 101;
     height: px2rem(35);
     background: transparent;
     .ebook-bookmark-text-wrapper {

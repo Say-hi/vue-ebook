@@ -4,6 +4,9 @@
     <div @click='onMaskClick'
          @touchmove='move'
          @touchend='moveEnd'
+         @mousedown.left='onMouseEnter'
+         @mousemove.left='onMouseMove'
+         @mouseup.left='onMouseEnd'
          class='ebook-reader-mask'></div>
   </div>
 </template>
@@ -27,13 +30,53 @@ global.epub = Epub
 export default {
   mixins: [ebookMixin],
   methods: {
+    // 1 鼠标进入
+    // 2 鼠标进入后移动
+    // 3 鼠标从移动状态松手
+    // 4 鼠标还原
+    onMouseEnter (e) {
+      this.mouseState = 1
+      this.mouseStartTime = e.timestamp
+      e.preventDefault()
+      e.stopPropagation()
+    },
+    onMouseMove (e) {
+      if (this.mouseState === 1) {
+        this.mouseState = 2
+      } else if (this.mouseState === 2) {
+        let offsetY = 0
+        if (this.firstOffsetY) {
+          offsetY = e.clientY - this.firstOffsetY
+          this.setOffsetY(offsetY)
+        } else {
+          this.firstOffsetY = e.clientY
+        }
+      }
+      e.preventDefault()
+      e.stopPropagation()
+    },
+    onMouseEnd (e) {
+      if (this.mouseState === 2) {
+        this.setOffsetY(0)
+        this.firstOffsetY = null
+        this.mouseState = 3
+      } else {
+        this.mouseState = 4
+      }
+      const time = e.timestamp - this.mouseStartTime
+      if (time < 100) {
+        this.mouseState = 4
+      }
+      e.preventDefault()
+      e.stopPropagation()
+    },
     move (e) {
       let offsetY = 0
       if (this.firstOffsetY) {
-        offsetY = e.changedTouches[0].clientY - this.firstOffsetY
+        offsetY = e.clientY - this.firstOffsetY
         this.setOffsetY(offsetY)
       } else {
-        this.firstOffsetY = e.changedTouches[0].clientY
+        this.firstOffsetY = e.clientY
       }
       e.preventDefault()
       e.stopPropagation()
@@ -43,6 +86,7 @@ export default {
       this.firstOffsetY = null
     },
     onMaskClick (e) {
+      if (this.mouseState && (this.mouseState === 2 || this.mouseState === 3)) { return }
       const offsetX = e.offsetX
       const width = window.innerWidth
       if (offsetX > 0 & offsetX < width * 0.3) {
@@ -106,8 +150,8 @@ export default {
     initRendition () {
       this.rendition = this.book.renderTo('read', {
         width: innerWidth,
-        height: innerHeight
-        // method: 'default' // 用于兼容微信的设置，在0.3.71 以后不需要了
+        height: innerHeight,
+        method: 'default' // 用于兼容微信的设置，在0.3.71 以后不需要了
       })
       const location = getLocation(this.fileName)
       this.display(location, () => {
@@ -123,9 +167,7 @@ export default {
           contents.addStylesheet(`${process.env.VUE_APP_RES_URL}/fonts/cabin.css`),
           contents.addStylesheet(`${process.env.VUE_APP_RES_URL}/fonts/montserrat.css`),
           contents.addStylesheet(`${process.env.VUE_APP_RES_URL}/fonts/tangerine.css`)
-        ]).then(() => {
-          console.log('字体全部加载完毕')
-        })
+        ])
       })
     },
     initGesture () {

@@ -1,9 +1,14 @@
 <template>
   <div class="ebook" ref='ebook'>
+    <ebook-header></ebook-header>
     <ebook-title></ebook-title>
     <ebook-reader></ebook-reader>
     <ebook-menu></ebook-menu>
     <ebook-bookmark></ebook-bookmark>
+    <ebook-footer></ebook-footer>
+<!--    <div v-show='!bookAvailable' class='ebook-loading'>-->
+<!--      -->
+<!--    </div>-->
   </div>
 </template>
 
@@ -12,6 +17,9 @@ import EbookBookmark from '../../components/ebook/EbookBookmark'
 import EbookReader from '../../components/ebook/EbookReader'
 import EbookTitle from '../../components/ebook/EbookTitle'
 import EbookMenu from '../../components/ebook/EbookMenu'
+import EbookHeader from '../../components/ebook/EbookHeader'
+import EbookFooter from '../../components/ebook/EbookFooter'
+// import EbookLoading from '../../components/ebook/EbookLoading'
 import {
   getReadTime,
   saveReadTime
@@ -20,10 +28,13 @@ import {ebookMixin} from '../../utils/mixin'
 export default {
   mixins: [ebookMixin],
   components: {
+    // EbookLoading,
     EbookReader,
     EbookTitle,
     EbookMenu,
-    EbookBookmark
+    EbookBookmark,
+    EbookHeader,
+    EbookFooter
   },
   methods: {
     move (v) {
@@ -75,6 +86,14 @@ export default {
   @import "../../assets/styles/global";
   .ebook {
     position: absolute;
+    width: 100%;
+    height: 100%;
+    top: 0;
+    left: 0;
+  }
+  .ebook-loading {
+    position: absolute;
+    @include center;
     width: 100%;
     height: 100%;
     top: 0;
