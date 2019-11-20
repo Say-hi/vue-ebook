@@ -1,19 +1,19 @@
 <template>
   <div id="app">
     <router-view />
-    <div v-show='!bookAvailable' class='loading'>
-      <ebook-loading></ebook-loading>
-    </div>
+<!--    <div v-show='!bookAvailable' class='loading'>-->
+<!--      <ebook-loading></ebook-loading>-->
+<!--    </div>-->
   </div>
 </template>
 
 <script>
-import EbookLoading from './components/ebook/EbookLoading'
+// import EbookLoading from './components/ebook/EbookLoading'
 import {ebookMixin} from './utils/mixin'
 export default {
   mixins: [ebookMixin],
   components: {
-    EbookLoading
+    // EbookLoading
   }
 }
 document.addEventListener('DOMContentLoaded', () => {
